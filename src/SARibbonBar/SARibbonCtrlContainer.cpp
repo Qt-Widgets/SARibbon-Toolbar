@@ -1,8 +1,10 @@
 ﻿#include "SARibbonCtrlContainer.h"
+#include <QHBoxLayout>
 #include <QPainter>
 #include <QPaintEvent>
 #include <QStylePainter>
 #include <QDebug>
+#include <QLabel>
 #include "SARibbonDrawHelper.h"
 
 /**
@@ -11,227 +13,141 @@
 class SARibbonCtrlContainerPrivate
 {
 public:
-    SARibbonCtrlContainer *Parent;
-    QWidget *containerWidget;
-    bool enableDrawIcon;
-    bool enableDrawTitle;
-    SARibbonCtrlContainerPrivate(SARibbonCtrlContainer *p)
-        : containerWidget(Q_NULLPTR)
-        , enableDrawIcon(true)
-        , enableDrawTitle(true)
+    SARibbonCtrlContainer* q_ptr;
+    QWidget* containerWidget;
+    QHBoxLayout* horizontalLayout;
+    QLabel* labelPixmap;
+    QLabel* labelText;
+    QIcon icon;
+    QSize iconSize;
+    SARibbonCtrlContainerPrivate(SARibbonCtrlContainer* p) : containerWidget(Q_NULLPTR), iconSize(24, 24)
     {
-        Parent = p;
+        q_ptr            = p;
+        horizontalLayout = new QHBoxLayout(p);
+        horizontalLayout->setSpacing(0);
+        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
+        horizontalLayout->setContentsMargins(0, 0, 0, 0);
+
+        labelPixmap = new QLabel(p);
+        labelPixmap->setObjectName(QString::fromUtf8("labelPixmap"));
+        labelPixmap->setAlignment(Qt::AlignCenter);
+        horizontalLayout->addWidget(labelPixmap);
+
+        labelText = new QLabel(p);
+        labelText->setObjectName(QString::fromUtf8("labelText"));
+        horizontalLayout->addWidget(labelText);
     }
 
-
-    void init(QWidget *w)
+    void setContainerWidget(QWidget* w)
     {
-        containerWidget = w;
-        if (w) {
-            containerWidget->setParent(Parent);
+        if (containerWidget) {
+            //原来有widget
+            QWidget* oldwidget = containerWidget;
+            takeContainerWidget(oldwidget);
+            oldwidget->deleteLater();
         }
-        Parent->setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed));
+        containerWidget = w;
+        if (!w) {
+            return;
+        }
+        if (w->parent() != q_ptr) {
+            w->setParent(q_ptr);
+        }
+        // ContainerWidget永远在最右边
+        horizontalLayout->insertWidget(horizontalLayout->count(), w);
+        QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        w->setSizePolicy(sizePolicy);
+    }
+
+    void takeContainerWidget(QWidget* w)
+    {
+        int i = horizontalLayout->indexOf(w);
+        if (i >= 0) {
+            QLayoutItem* item = horizontalLayout->takeAt(i);
+            delete item;
+        }
     }
 };
 
-SARibbonCtrlContainer::SARibbonCtrlContainer(QWidget *containerWidget, QWidget *parent)
-    : QWidget(parent)
-    , m_d(new SARibbonCtrlContainerPrivate(this))
+SARibbonCtrlContainer::SARibbonCtrlContainer(QWidget* parent)
+    : QWidget(parent), m_d(new SARibbonCtrlContainerPrivate(this))
 {
-    m_d->init(containerWidget);
 }
-
 
 SARibbonCtrlContainer::~SARibbonCtrlContainer()
 {
     delete m_d;
 }
 
-
-QSize SARibbonCtrlContainer::sizeHint() const
-{
-    if (nullptr == m_d->containerWidget) {
-        return (QWidget::sizeHint());
-    }
-    QSize containerSizeHint = m_d->containerWidget->sizeHint();
-
-    if (m_d->enableDrawIcon) {
-        QIcon icon = windowIcon();
-        if (!icon.isNull()) {
-            containerSizeHint.setWidth(containerSizeHint.width() + containerSizeHint.height());
-        }
-    }
-    if (m_d->enableDrawTitle) {
-        QString text = windowTitle();
-        if (!text.isEmpty()) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-            int textWidth = fontMetrics().horizontalAdvance(text);
-#else
-            int textWidth = fontMetrics().width(text);
-#endif
-            containerSizeHint.setWidth(containerSizeHint.width() + textWidth);
-        }
-    }
-    return (containerSizeHint);
-}
-
-
-QSize SARibbonCtrlContainer::minimumSizeHint() const
-{
-    if (nullptr == m_d->containerWidget) {
-        return (QWidget::minimumSizeHint());
-    }
-    QSize containerHint = m_d->containerWidget->minimumSizeHint();
-
-    if (m_d->enableDrawIcon) {
-        QIcon icon = windowIcon();
-        if (!icon.isNull()) {
-            containerHint.setWidth(containerHint.width() + containerHint.height());
-        }
-    }
-    if (m_d->enableDrawTitle) {
-        QString text = windowTitle();
-        if (!text.isEmpty()) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-            int textWidth = fontMetrics().horizontalAdvance(text.at(0));
-#else
-            int textWidth = fontMetrics().width(text.at(0));
-#endif
-            containerHint.setWidth(containerHint.width() + (2*textWidth));
-        }
-    }
-    return (containerHint);
-}
-
-
-QWidget *SARibbonCtrlContainer::containerWidget()
+QWidget* SARibbonCtrlContainer::getContainerWidget()
 {
     return (m_d->containerWidget);
 }
 
-
-const QWidget *SARibbonCtrlContainer::containerWidget() const
+const QWidget* SARibbonCtrlContainer::getContainerWidget() const
 {
     return (m_d->containerWidget);
 }
-
 
 void SARibbonCtrlContainer::setEnableShowIcon(bool b)
 {
-    m_d->enableDrawIcon = b;
-    update();
+    m_d->labelPixmap->setVisible(b);
 }
-
 
 void SARibbonCtrlContainer::setEnableShowTitle(bool b)
 {
-    m_d->enableDrawTitle = b;
-    update();
+    m_d->labelText->setVisible(b);
 }
 
-
-void SARibbonCtrlContainer::setContainerWidget(QWidget *w)
+/**
+ * @brief 判断是否存在容器窗口
+ * @return
+ */
+bool SARibbonCtrlContainer::hasContainerWidget() const
 {
-    if (m_d->containerWidget) {
-        m_d->containerWidget->hide();
-        m_d->containerWidget->deleteLater();
-    }
-    if (w) {
-        w->setParent(this);
-    }
-    m_d->containerWidget = w;
+    return (m_d->containerWidget != nullptr);
 }
 
-
-void SARibbonCtrlContainer::paintEvent(QPaintEvent *e)
+/**
+ * @brief 设置图标
+ * @param i
+ */
+void SARibbonCtrlContainer::setIcon(const QIcon& i)
 {
-    Q_UNUSED(e);
-    QStylePainter painter(this);
-
-    // draw the combobox frame, focusrect and selected etc.
-    QStyleOption opt;
-
-    initStyleOption(&opt);
-    const int widgetHeight = height();
-    int x = 0;
-
-    //绘制图标
-    if (m_d->enableDrawIcon) {
-        QIcon icon = windowIcon();
-        if (!icon.isNull()) {
-            //绘制图标
-            QSize iconSize = SARibbonDrawHelper::iconActualSize(icon, &opt, QSize(widgetHeight, widgetHeight));
-            SARibbonDrawHelper::drawIcon(icon, &painter, &opt, x, 0, widgetHeight, widgetHeight);
-            x += iconSize.width() + 4;
-        }
-    }
-    //绘制文字
-    if (m_d->enableDrawTitle) {
-        QString text = windowTitle();
-        if (!text.isEmpty()) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-            int textWidth = opt.fontMetrics.horizontalAdvance(text);
-#else
-            int textWidth = opt.fontMetrics.width(text);
-#endif
-            if (textWidth > (opt.rect.width() - widgetHeight - x)) {
-                textWidth = opt.rect.width() - widgetHeight - x;
-                text = opt.fontMetrics.elidedText(text, Qt::ElideRight, textWidth);
-            }
-            if (textWidth > 0) {
-                SARibbonDrawHelper::drawText(text, &painter, &opt
-                    , Qt::AlignLeft|Qt::AlignVCenter
-                    , QRect(x, 0, textWidth, opt.rect.height()));
-            }
-        }
-    }
-    // QWidget::paintEvent(e);
+    m_d->icon = i;
+    m_d->labelPixmap->setPixmap(i.pixmap(m_d->iconSize));
 }
 
-
-void SARibbonCtrlContainer::resizeEvent(QResizeEvent *e)
+/**
+ * @brief 获取图标
+ * @return
+ */
+QIcon SARibbonCtrlContainer::getIcon() const
 {
-    Q_UNUSED(e);
-    QStyleOption opt;
-
-    initStyleOption(&opt);
-    int x = 0;
-    const int widgetHeight = height();
-
-    if (m_d->enableDrawIcon) {
-        QIcon icon = windowIcon();
-        if (!icon.isNull()) {
-            QSize iconSize = SARibbonDrawHelper::iconActualSize(icon, &opt, QSize(widgetHeight, widgetHeight));
-            x += iconSize.width();
-            x += 4;
-        }
-    }
-    //绘制文字
-    if (m_d->enableDrawTitle) {
-        QString text = windowTitle();
-        if (!text.isEmpty()) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-            int textWidth = opt.fontMetrics.horizontalAdvance(text);
-#else
-            int textWidth = opt.fontMetrics.width(text);
-#endif
-            if (textWidth > (opt.rect.width() - widgetHeight - x)) {
-                textWidth = opt.rect.width() - widgetHeight - x;
-                text = opt.fontMetrics.elidedText(text, Qt::ElideRight, textWidth);
-            }
-            if (textWidth > 0) {
-                x += textWidth;
-                x += 2;
-            }
-        }
-    }
-    if (m_d->containerWidget) {
-        m_d->containerWidget->setGeometry(x, 0, width()-x, height());
-    }
+    return m_d->icon;
 }
 
-
-void SARibbonCtrlContainer::initStyleOption(QStyleOption *opt)
+/**
+ * @brief 设置文字
+ * @param t
+ */
+void SARibbonCtrlContainer::setText(const QString& t)
 {
-    opt->initFrom(this);
+    m_d->labelText->setText(t);
+}
+
+/**
+ * @brief 获取文字
+ * @return
+ */
+QString SARibbonCtrlContainer::getText() const
+{
+    return m_d->labelText->text();
+}
+
+void SARibbonCtrlContainer::setContainerWidget(QWidget* w)
+{
+    m_d->setContainerWidget(w);
 }

@@ -1,27 +1,18 @@
 ﻿#include "SARibbonStyleOption.h"
-
+#include <QApplication>
+#include <QDebug>
 SARibbonStyleOption::SARibbonStyleOption()
 {
-    m_ribbonbarHeightOfficeStyleThreeRow = 160;
-    m_widgetBord                         = QMargins(5, 1, 5, 5);
-    m_titleBarHeight                     = 30;
-    m_tabBarHeight                       = 25;
+    QFontMetrics fm = QApplication::fontMetrics();
+    int lineSpacing = fm.lineSpacing();
+
+    m_titleBarHeight                     = lineSpacing * 1.8;
+    m_tabBarHeight                       = lineSpacing * 1.5;
+    m_ribbonbarHeightOfficeStyleThreeRow = m_titleBarHeight + m_tabBarHeight + (lineSpacing * 1.5) * 3
+                                           + SARibbonPannel::pannelTitleHeight()
+                                           + SARibbonPannelLayout::pannelContentsMargins().bottom()
+                                           + SARibbonPannelLayout::pannelContentsMargins().top();
     recalc();
-}
-
-void SARibbonStyleOption::setTitleBarHeight(int h)
-{
-    m_titleBarHeight = h;
-}
-
-void SARibbonStyleOption::setRibbonBarHeightOfficeStyleThreeRow(int h)
-{
-    m_ribbonbarHeightOfficeStyleThreeRow = h;
-}
-
-void SARibbonStyleOption::setWidgetBord(const QMargins& m)
-{
-    m_widgetBord = m;
 }
 
 int SARibbonStyleOption::ribbonBarHeight(SARibbonBar::RibbonStyle s) const
@@ -41,37 +32,6 @@ int SARibbonStyleOption::ribbonBarHeight(SARibbonBar::RibbonStyle s) const
     return m_ribbonbarHeightOfficeStyleThreeRow;
 }
 
-// int SARibbonStyleOption::pannelHeight(SARibbonPannel::PannelLayoutMode lm) const
-//{
-//    switch (lm) {
-//    case SARibbonPannel::ThreeRowMode:
-//        return m_pannelHeightThreeRow;
-//    case SARibbonPannel::TwoRowMode:
-//        return m_pannelHeightTwoRow;
-//    default:
-//        break;
-//    }
-//    return m_pannelHeightThreeRow;
-//}
-
-/**
- * @brief pannel的内容区域高度，减去了ContentsMargin
- * @param lm
- * @return
- */
-// int SARibbonStyleOption::pannelContentsHeight(SARibbonPannel::PannelLayoutMode lm) const
-//{
-//    switch (lm) {
-//    case SARibbonPannel::ThreeRowMode:
-//        return m_pannelHeightThreeRow - m_pannelTitleHeight - m_pannelContentsMargins.top() - m_pannelContentsMargins.bottom();
-//    case SARibbonPannel::TwoRowMode:
-//        return m_pannelHeightTwoRow - m_pannelContentsMargins.top() - m_pannelContentsMargins.bottom();
-//    default:
-//        break;
-//    }
-//    return m_pannelHeightThreeRow;
-//}
-
 /**
  * @brief 标题栏高度
  * @return
@@ -86,43 +46,12 @@ int SARibbonStyleOption::tabBarHeight() const
     return m_tabBarHeight;
 }
 
-/**
- * @brief 整个ribbonbar的四个边框
- * @return
- */
-const QMargins& SARibbonStyleOption::widgetBord() const
-{
-    return m_widgetBord;
-}
-
 void SARibbonStyleOption::recalc()
 {
     m_ribbonbarHeightWPSStyleThreeRow  = calcMainbarHeight(SARibbonBar::WpsLiteStyle);
     m_ribbonbarHeightOfficeStyleTwoRow = calcMainbarHeight(SARibbonBar::OfficeStyleTwoRow);
     m_ribbonbarHeightWPSStyleTwoRow    = calcMainbarHeight(SARibbonBar::WpsLiteStyleTwoRow);
-    //    m_pannelHeightThreeRow             = calcPannelHeight(SARibbonPannel::ThreeRowMode);
-    //    m_pannelHeightTwoRow               = calcPannelHeight(SARibbonPannel::TwoRowMode);
 }
-
-/**
- * @brief 通过固有参数计算pannel的高度
- * @param lm
- * @return
- */
-// int SARibbonStyleOption::calcPannelHeight(SARibbonPannel::PannelLayoutMode lm) const
-//{
-//    int r = m_ribbonbarHeightWPSStyleThreeRow - m_titleBarHeight - widgetBord().top() - widgetBord().bottom();
-//    switch (lm) {
-//    case SARibbonPannel::TwoRowMode:
-//        r = m_ribbonbarHeightWPSStyleTwoRow - m_titleBarHeight - widgetBord().top() - widgetBord().bottom();
-//    case SARibbonPannel::ThreeRowMode:
-//        //注意是减m_titleBarHeight不是tabBarHight
-//        break;
-//    default:
-//        break;
-//    }
-//    return r;
-//}
 
 /**
  * @brief 计算ribbon的高度
@@ -148,8 +77,21 @@ int SARibbonStyleOption::calcMainbarHeight(SARibbonBar::RibbonStyle s) const
     return m_ribbonbarHeightOfficeStyleThreeRow;
 }
 
-SARibbonStyleOption sa_calc_default_ribbon_style_option()
+/**
+ * @brief 对SARibbonStyleOption输出
+ * @param debug
+ * @param c
+ * @return
+ */
+QDebug operator<<(QDebug debug, const SARibbonStyleOption& c)
 {
-    //    QFontMetrics fm = QApplication::fontMetrics();
-    return SARibbonStyleOption();
+    QDebugStateSaver saver(debug);
+    Q_UNUSED(saver);
+    debug.nospace() << "fontMetrics.lineSpacing=" << QApplication::fontMetrics().lineSpacing()
+                    << ",SARibbonStyleOption(titleBarHeight=" << c.titleBarHeight() << ",tabBarHeight=" << c.tabBarHeight()
+                    << "\n,ribbonBarHeight(OfficeStyle)=" << c.ribbonBarHeight(SARibbonBar::OfficeStyle)
+                    << "\n,ribbonBarHeight(OfficeStyleTwoRow)=" << c.ribbonBarHeight(SARibbonBar::OfficeStyleTwoRow)
+                    << "\n,ribbonBarHeight(WpsLiteStyle)=" << c.ribbonBarHeight(SARibbonBar::WpsLiteStyle)
+                    << "\n,ribbonBarHeight(WpsLiteStyleTwoRow)=" << c.ribbonBarHeight(SARibbonBar::WpsLiteStyleTwoRow);
+    return debug;
 }

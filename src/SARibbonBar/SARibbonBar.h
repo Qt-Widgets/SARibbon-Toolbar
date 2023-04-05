@@ -95,7 +95,9 @@ class SA_RIBBON_EXPORT SARibbonBar : public QMenuBar
     Q_PROPERTY(RibbonStyle ribbonStyle READ currentRibbonStyle WRITE setRibbonStyle)
     Q_PROPERTY(bool minimumMode READ isMinimumMode WRITE setMinimumMode)
     Q_PROPERTY(bool minimumModeButton READ haveShowMinimumModeButton WRITE showMinimumModeButton)
-
+    Q_PROPERTY(QColor windowTitleTextColor READ windowTitleTextColor WRITE setWindowTitleTextColor)
+    Q_PROPERTY(QColor tabBarBaseLineColor READ tabBarBaseLineColor WRITE setTabBarBaseLineColor)
+    Q_PROPERTY(Qt::Alignment windowTitleAligment READ windowTitleAligment WRITE setWindowTitleAligment)
 public:
     /**
      * @brief 定义ribbon的风格,第一字节代表样式，第二字节代表是否是2行
@@ -142,7 +144,6 @@ public:
     SARibbonTabBar* ribbonTabBar();
 
     //添加一个标签
-
     SARibbonCategory* addCategoryPage(const QString& title);
     void addCategoryPage(SARibbonCategory* category);
 
@@ -259,11 +260,17 @@ public:
     //告诉saribbonbar，window button的尺寸
     void setWindowButtonSize(const QSize& size);
 
-    //设置标题颜色
-    void setTitleTextColor(const QColor& clr);
-
+    //更新ribbon的布局数据，此函数适用于一些关键性尺寸变化，换起ribbon下面元素的布局
+    void updateRibbonGeometry();
     // tabbar 底部会绘制一条线条，此接口定义线条颜色
     void setTabBarBaseLineColor(const QColor& clr);
+    QColor tabBarBaseLineColor() const;
+    //设置标题颜色
+    void setWindowTitleTextColor(const QColor& clr);
+    QColor windowTitleTextColor() const;
+    //设置标题的对齐方式
+    void setWindowTitleAligment(Qt::Alignment al);
+    Qt::Alignment windowTitleAligment() const;
 signals:
 
     /**
@@ -297,11 +304,9 @@ protected:
 
     //根据currentRibbonStyle计算mainBar的高度
     virtual int mainBarHeight() const;
-
-    // ribbon相对widget的Margins
-    virtual const QMargins& widgetBord() const;
 protected slots:
     void onWindowTitleChanged(const QString& title);
+    void onWindowIconChanged(const QIcon& i);
     void onCategoryWindowTitleChanged(const QString& title);
     void onStackWidgetHided();
     virtual void onCurrentRibbonTabChanged(int index);
@@ -312,7 +317,6 @@ protected slots:
 
 private:
     int tabIndex(SARibbonCategory* obj);
-    void updateRibbonElementGeometry();
     void resizeInOfficeStyle();
     void resizeInWpsLiteStyle();
     void paintInNormalStyle();
@@ -321,6 +325,7 @@ private:
 
     //刷新所有ContextCategoryManagerData，这个在单独一个Category删除时调用
     void updateContextCategoryManagerData();
+    void updateRibbonElementGeometry();
 
 protected:
     void paintEvent(QPaintEvent* e) Q_DECL_OVERRIDE;

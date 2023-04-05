@@ -1,16 +1,13 @@
-﻿
+﻿cmake_minimum_required(VERSION 3.5)
+project(SARibbonBar LANGUAGES CXX VERSION ${SARIBBON_VERSION})
 set(LIB_NAME SARibbonBar)
 
-set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-if(SARIBBON_QT_VERSION VERSION_EQUAL 5)
-	qt5_add_resources(QRCS resource.qrc)
-else()
-	qt_add_resources(QRCS resource.qrc)
-endif()
 
-SET(HEADER_FILES
+# header files
+# cn:头文件
+SET(SARIBBON_HEADER_FILES
     SAFramelessHelper.h
     SARibbonStyleOption.h
     SARibbonActionsManager.h
@@ -50,9 +47,9 @@ SET(HEADER_FILES
     SARibbonLineWidgetContainer.h
 )
 
-qt5_wrap_cpp(MOC_HEADER_FILES ${HEADER_FILES})
-
-SET(SOURCE_FILES
+# source files
+# cn:cpp文件
+SET(SARIBBON_SOURCE_FILES
     SAFramelessHelper.cpp
     SARibbonStyleOption.cpp
     SARibbonActionsManager.cpp
@@ -91,50 +88,55 @@ SET(SOURCE_FILES
     SARibbonLineWidgetContainer.cpp
 )
 
-add_definitions(-DSA_RIBBON_BAR_MAKE_LIB)
+# resource files
+# cn:资源文件
+SET(SARIBBON_RESOURCE_FILES
+    resource.qrc
+)
 
 add_library(${LIB_NAME} SHARED
-    ${QRCS}
-    ${MOC_HEADER_FILES}
-    ${HEADER_FILES}
-    ${SOURCE_FILES}
-    )
+    ${SARIBBON_HEADER_FILES}
+    ${SARIBBON_SOURCE_FILES}
+    ${SARIBBON_RESOURCE_FILES}
+)
 
-target_link_libraries(${LIB_NAME} ${Qt${SARIBBON_QT_VERSION}Widgets_LIBRARIES})
 
-SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES AUTOMOC TRUE AUTOUIC TRUE AUTORCC TRUE DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+target_link_libraries(${LIB_NAME} PUBLIC
+                      Qt${QT_VERSION_MAJOR}::Core
+                      Qt${QT_VERSION_MAJOR}::Gui
+                      Qt${QT_VERSION_MAJOR}::Widgets)
 
-INSTALL(
-		TARGETS ${LIB_NAME}
-		RUNTIME DESTINATION bin
-		LIBRARY DESTINATION bin
-		ARCHIVE DESTINATION lib
+set_target_properties(${LIB_NAME} PROPERTIES
+    AUTOMOC ON
+    AUTOUIC ON
+    AUTORCC ON
+    CXX_EXTENSIONS OFF
+    DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX}
+    VERSION ${SARIBBON_VERSION}
+    EXPORT_NAME ${LIB_NAME}
+    ARCHIVE_OUTPUT_DIRECTORY "${SARIBBON_BIN_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY "${SARIBBON_BIN_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY "${SARIBBON_BIN_DIR}"
+)
+
+target_compile_definitions(${LIB_NAME} PRIVATE SA_RIBBON_BAR_MAKE_LIB)
+
+
+
+
+target_include_directories(${LIB_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS ${LIB_NAME}
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION bin
+	ARCHIVE DESTINATION lib
+)
+install(FILES ${SARIBBON_HEADER_FILES} DESTINATION include)
+
+if(WIN32)
+	create_win32_resource_version(
+		TARGET ${LIB_NAME}
+		FILENAME ${LIB_NAME}
+		EXT "dll"
+		DESCRIPTION "Ribbon control library for Qt"
 	)
-
-INSTALL(
-		FILES       ${HEADER_FILES}
-		DESTINATION include
-	)
-
-#=============Copy SARibbonBar Dll FILES to MainWindowExample Project================================
-if(BUILD_EXAMPLES)
-    SET(MainWindowExample_SubProject_DIR ${CMAKE_CURRENT_BINARY_DIR}/../example/MainWindowExample)	#目标目录
-
-    SET(SARibbonBar_Debug_DLL_FILE 
-        ${CMAKE_CURRENT_BINARY_DIR}/Debug/${LIB_NAME}d.dll
-    )
-    SET(SARibbonBar_Release_DLL_FILE 
-        ${CMAKE_CURRENT_BINARY_DIR}/Release/${LIB_NAME}.dll
-    )
-
-    add_custom_command(TARGET ${LIB_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E 
-                make_directory "${MainWindowExample_SubProject_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/"	#因创建子项目顺序，需先创建目标目录再进行复制操作
-        COMMAND ${CMAKE_COMMAND} -E
-                copy_if_different 
-                    "$<$<CONFIG:Release>:${SARibbonBar_Release_DLL_FILE}>" 
-                    "$<$<CONFIG:Debug>:${SARibbonBar_Debug_DLL_FILE}>" 
-                    "${MainWindowExample_SubProject_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/"
-    )
-endif(BUILD_EXAMPLES)
+endif()
