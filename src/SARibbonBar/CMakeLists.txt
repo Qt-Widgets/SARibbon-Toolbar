@@ -33,7 +33,7 @@ SET(SARIBBON_HEADER_FILES
     SARibbonGalleryGroup.h
     SARibbonGalleryItem.h
     SARibbonComboBox.h
-    SARibbonElementCreateDelegate.h
+    SARibbonElementFactory.h
     SARibbonElementManager.h
     SARibbonDrawHelper.h
     SARibbonLineEdit.h
@@ -45,6 +45,7 @@ SET(SARIBBON_HEADER_FILES
     SARibbonPannelLayout.h
     SARibbonPannelItem.h
     SARibbonLineWidgetContainer.h
+    SARibbonColorToolButton.h
 )
 
 # source files
@@ -74,7 +75,7 @@ SET(SARIBBON_SOURCE_FILES
     SARibbonGalleryGroup.cpp
     SARibbonGalleryItem.cpp
     SARibbonComboBox.cpp
-    SARibbonElementCreateDelegate.cpp
+    SARibbonElementFactory.cpp
     SARibbonElementManager.cpp
     SARibbonDrawHelper.cpp
     SARibbonLineEdit.cpp
@@ -86,8 +87,23 @@ SET(SARIBBON_SOURCE_FILES
     SARibbonPannelLayout.cpp
     SARibbonPannelItem.cpp
     SARibbonLineWidgetContainer.cpp
+    SARibbonColorToolButton.cpp
 )
-
+# 颜色组件SAColorWidgets
+# https://github.com/czyt1988/SAColorWidgets
+SET(SACOLOR_HEADER_FILES
+    ./colorWidgets/SAColorWidgetsGlobal.h
+    ./colorWidgets/SAColorToolButton.h
+    ./colorWidgets/SAColorGridWidget.h
+    ./colorWidgets/SAColorPaletteGridWidget.h
+    ./colorWidgets/SAColorMenu.h
+)
+SET(SACOLOR_SOURCE_FILES
+    ./colorWidgets/SAColorToolButton.cpp
+    ./colorWidgets/SAColorGridWidget.cpp
+    ./colorWidgets/SAColorPaletteGridWidget.cpp
+    ./colorWidgets/SAColorMenu.cpp
+)
 # resource files
 # cn:资源文件
 SET(SARIBBON_RESOURCE_FILES
@@ -97,6 +113,8 @@ SET(SARIBBON_RESOURCE_FILES
 add_library(${LIB_NAME} SHARED
     ${SARIBBON_HEADER_FILES}
     ${SARIBBON_SOURCE_FILES}
+    ${SACOLOR_HEADER_FILES}
+    ${SACOLOR_SOURCE_FILES}
     ${SARIBBON_RESOURCE_FILES}
 )
 
@@ -118,19 +136,48 @@ set_target_properties(${LIB_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${SARIBBON_BIN_DIR}"
     RUNTIME_OUTPUT_DIRECTORY "${SARIBBON_BIN_DIR}"
 )
-
+# 构建库定义的宏
 target_compile_definitions(${LIB_NAME} PRIVATE SA_RIBBON_BAR_MAKE_LIB)
+# 使用SAColorWidgets但不作为库使用定义的宏
+target_compile_definitions(${LIB_NAME} PRIVATE SA_COLOR_WIDGETS_NO_DLL)
 
 
-
-
-target_include_directories(${LIB_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-install(TARGETS ${LIB_NAME}
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION bin
-	ARCHIVE DESTINATION lib
+target_include_directories(${LIB_NAME} PUBLIC
+    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-install(FILES ${SARIBBON_HEADER_FILES} DESTINATION include)
+# ------------------------------- install script -------------------------------
+set(SARIBBON_INSTALL_DIR SARibbon)
+set(CMAKE_INSTALL_PREFIX ${SARIBBON_BIN_DIR})
+# Generate library version info which will generate xxxConfigVersion.cmake,
+# the ${PACKAGE_VERSION} is the version defined in project()
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${LIB_NAME}ConfigVersion.cmake"
+    VERSION ${VERSION_SHORT}
+    COMPATIBILITY SameMajorVersion
+)
+install(FILES
+    ${SARIBBON_HEADER_FILES}
+    DESTINATION include/${SARIBBON_INSTALL_DIR}
+    COMPONENT headers
+)
+install(FILES
+    ${SACOLOR_HEADER_FILES}
+    DESTINATION include/${SARIBBON_INSTALL_DIR}/colorWidgets
+    COMPONENT headers
+)
+install(TARGETS ${LIB_NAME}
+    EXPORT SARibbonTargets
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    INCLUDES DESTINATION include/${SARIBBON_INSTALL_DIR}
+)
+install(EXPORT SARibbonTargets
+    FILE SARibbonTargets.cmake
+    DESTINATION lib/cmake/${SARIBBON_INSTALL_DIR}
+)
 
 if(WIN32)
 	create_win32_resource_version(

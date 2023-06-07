@@ -1,5 +1,7 @@
 ﻿[Click here for English](./readme.md)
 
+[![CMake](https://github.com/czyt1988/SARibbon/actions/workflows/cmake.yml/badge.svg)](https://github.com/czyt1988/SARibbon/actions/workflows/cmake.yml)
+
  这是基于Qt（最低要求Qt5，支持C++11的编译器）开发的一个轻量级的Ribbon控件(Office样式UI)
 
  界面截图：
@@ -481,11 +483,11 @@ SARibbon实现自定义只需上述几步即可实现。
 
 - 这是使用此控件的本人另外一个开源软件的截图
 
-![](./doc/screenshot/sa-screenshot.gif)
+![](./doc/screenshot/data-workbench-screenshot1-cn.gif)
+![](./doc/screenshot/data-workbench-screenshot01-en.png)
+[github - https://github.com/czyt1988/data-workbench](https://github.com/czyt1988/data-workbench)
 
-[github - https://github.com/czyt1988/sa](https://github.com/czyt1988/sa)
-
-[gitee - https://gitee.com/czyt1988/SA](https://gitee.com/czyt1988/SA)
+[gitee - https://gitee.com/czyt1988/data-workbench](https://gitee.com/czyt1988/data-workbench)
 
 # 题外
 
@@ -495,20 +497,21 @@ SARibbon实现自定义只需上述几步即可实现。
 
 更多界面截图可看：
 
-[github - https://github.com/czyt1988/sa](https://github.com/czyt1988/sa)
+[github - https://github.com/czyt1988/data-workbench](https://github.com/czyt1988/data-workbench)
 
-[gitee - https://gitee.com/czyt1988/SA](https://gitee.com/czyt1988/SA)
+[gitee - https://gitee.com/czyt1988/data-workbench](https://gitee.com/czyt1988/data-workbench)
 
 SARibbon项目是SA项目的子项
 
 具体Ribbon的生成代码可见：
-[https://github.com/czyt1988/sa/blob/master/src/signA/MainWindowPrivate.cpp](https://github.com/czyt1988/sa/blob/master/src/signA/MainWindowPrivate.cpp)
+[https://github.com/czyt1988/data-workbench/blob/master/src/APP/DAAppRibbonArea.cpp](https://github.com/czyt1988/data-workbench/blob/master/src/APP/DAAppRibbonArea.cpp)
 
 这个ribbon主要通过QTabbar和QStackWidget实现，按照微软MFCRibbbon的接口命名方式来写，主要通过qss来控制，默认qss在资源文件中，理论上能满足各种样式，可以实现样式的切换(换肤)
 
-若有空会把这个`SARibbon`和`SA`一起打包讲讲如何开发，其中遇到的一些坑啊和注意的问题。
 
 # 计划及进度
+
+目前我的开发精力主要在[data-workbench](https://github.com/czyt1988/data-workbench)中，我会在开发过程遇到的问题对SARibbon进行修正，也会针对Issues进行修正
 
 ## 计划
 
@@ -521,5 +524,7 @@ SARibbon项目是SA项目的子项
 - 某些Ubuntu系统无法显示
 
 # 其他
+
+[关于SARibbonToolButton的布局方案说明](./doc/)
 
 > 感谢[FastCAE](http://www.fastcae.com/product.html)项目使用了本控件，并找到了许多bug和建议，FastCAE国产CAE软件集成开发平台，免费开源，是面向求解器开发者提供CAE软件界面与通用功能模块快速研发集成框架，[其开源仓库（github）:https://github.com/DISOGitHub/FastCAE](https://github.com/DISOGitHub/FastCAE)，[gitee:https://gitee.com/DISOGitee/FastCAE](https://gitee.com/DISOGitee/FastCAE)，[官网见:http://www.fastcae.com/product.html](http://www.fastcae.com/product.html)

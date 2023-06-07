@@ -20,6 +20,7 @@ private:
     void createCategoryOther(SARibbonCategory* page);
     void createCategoryDelete(SARibbonCategory* page);
     void createCategorySize(SARibbonCategory* page);
+    void createCategoryColor(SARibbonCategory* page);
     void createContextCategory1();
     void createContextCategory2();
     void createContextCategoryPage1(SARibbonCategory* page);
@@ -49,8 +50,9 @@ private slots:
     void onFontComWidgetCurrentFontChanged(const QFont& f);
     void onActionFontLargerTriggered();
     void onActionFontSmallerTriggered();
-    void onActionwordWrapIn2rowTriggered(bool b);
+    void onActionWordWrapTriggered(bool b);
     void onButtonGroupActionTriggered(QAction* act);
+    void onColorButtonColorClicked(const QColor& c, bool on);
 
 private:
     SARibbonContextCategory* m_contextCategory;
@@ -60,6 +62,8 @@ private:
     SARibbonActionsManager* m_actMgr;
     int m_actionTagText;
     int m_actionTagWithIcon;
+    //
+    QAction* mActionWordWrap { nullptr };
 };
 
 #endif  // MAINWINDOW_H

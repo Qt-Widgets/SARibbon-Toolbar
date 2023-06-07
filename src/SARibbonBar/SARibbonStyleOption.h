@@ -19,6 +19,7 @@ class SA_RIBBON_EXPORT SARibbonStyleOption
 {
 public:
     SARibbonStyleOption();
+    virtual ~SARibbonStyleOption();
 
 public:
     // ribbonBar的高度
@@ -38,6 +39,12 @@ protected:
     //    int calcPannelHeight(SARibbonPannel::PannelLayoutMode lm) const;
     //计算ribbon的高度
     int calcMainbarHeight(SARibbonBar::RibbonStyle s) const;
+
+private:
+    //初始化
+    void init();
+    //计算pannel的高度
+    void updateMainbarHeight();
 
 private:
     int m_tabBarHeight;                        ///< ribbon tab 的高度

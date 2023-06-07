@@ -332,13 +332,8 @@ SARibbonPannelItem* SARibbonPannelLayout::createItem(QAction* action, SARibbonPa
                                                                                              : SARibbonToolButton::SmallButton);
 
         SARibbonToolButton* button = RibbonSubElementDelegate->createRibbonToolButton(pannel);
-        button->setAutoRaise(true);
         button->setFocusPolicy(Qt::NoFocus);
         button->setButtonType(buttonType);
-        if (SARibbonToolButton::LargeButton == buttonType) {
-            //根据pannel的模式设置button样式
-            button->setLargeButtonType((pannel->isTwoRow()) ? SARibbonToolButton::Lite : SARibbonToolButton::Normal);
-        }
         button->setDefaultAction(action);
         //根据QAction的属性设置按钮的大小
 
@@ -514,8 +509,6 @@ void SARibbonPannelLayout::updateGeomArray(const QRect& setrect)
                     //换列，x自动递增到下个坐标，列数增加，行数归零，最大列宽归零
                     x += (columMaxWidth + spacing);
                     ++column;
-                    row           = 0;
-                    columMaxWidth = 0;
                     //换列后此时等价于0 == row
                     item->rowIndex            = 0;
                     item->columnIndex         = column;
@@ -687,7 +680,7 @@ void SARibbonPannelLayout::recalcExpandGeomArray(const QRect& setrect)
     //由于会涉及其他列的变更，因此需要所有都遍历一下
     for (auto i = columnExpandInfo.begin(); i != columnExpandInfo.end(); ++i) {
         int moveXLen = i.value().columnExpandedWidth - i.value().oldColumnWidth;
-        for (SARibbonPannelItem* item : this->m_items) {
+        for (SARibbonPannelItem* item : qAsConst(m_items)) {
             if (item->isEmpty() || (item->columnIndex < i.key())) {
                 //之前的列不用管
                 continue;

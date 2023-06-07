@@ -19,6 +19,11 @@
 #include <QButtonGroup>
 #include <QSpinBox>
 #include <QLineEdit>
+#include <QCalendarWidget>
+#include <QXmlStreamWriter>
+#include <QTextStream>
+#include <QFontComboBox>
+#include <QLabel>
 #include "SARibbonMenu.h"
 #include "SARibbonComboBox.h"
 #include "SARibbonLineEdit.h"
@@ -29,13 +34,11 @@
 #include "SARibbonApplicationButton.h"
 #include "SARibbonCustomizeWidget.h"
 #include "SARibbonElementManager.h"
-#include <QCalendarWidget>
 #include "SARibbonCustomizeDialog.h"
-#include <QXmlStreamWriter>
-#include <QTextStream>
-#include <QFontComboBox>
-#include <QLabel>
+#include "SARibbonColorToolButton.h"
 #include "SAFramelessHelper.h"
+#include "colorWidgets/SAColorPaletteGridWidget.h"
+#include "colorWidgets/SAColorGridWidget.h"
 #define PRINT_COST_START()                                                                                             \
     QElapsedTimer __TMP_COST;                                                                                          \
     __TMP_COST.start();                                                                                                \
@@ -82,20 +85,28 @@ MainWindow::MainWindow(QWidget* par) : SARibbonMainWindow(par), m_customizeWidge
 
     //添加删除标签页
     SARibbonCategory* categoryDelete = new SARibbonCategory();
-
     categoryDelete->setCategoryName(("Delete"));
     categoryDelete->setObjectName(("categoryDelete"));
     ribbon->addCategoryPage(categoryDelete);
     createCategoryDelete(categoryDelete);
     PRINT_COST("add category delete page");
+
     //添加尺寸标签页
     SARibbonCategory* categorySize = new SARibbonCategory();
-
     categorySize->setCategoryName(("Size(example long category)"));
     categorySize->setObjectName(("categorySize"));
     ribbon->addCategoryPage(categorySize);
     createCategorySize(categorySize);
-    PRINT_COST("add category delete page");
+    PRINT_COST("add category size page");
+
+    //添加颜色标签页
+    SARibbonCategory* categoryColor = new SARibbonCategory();
+    categoryColor->setCategoryName(("Color"));
+    categoryColor->setObjectName(("categoryColor"));
+    ribbon->addCategoryPage(categoryColor);
+    createCategoryColor(categoryColor);
+    PRINT_COST("add category color page");
+
     createContextCategory1();
     PRINT_COST("add context1 category page");
     createContextCategory2();
@@ -111,6 +122,7 @@ MainWindow::MainWindow(QWidget* par) : SARibbonMainWindow(par), m_customizeWidge
     setMinimumWidth(500);
     //
     showMaximized();
+    onStyleClicked(SARibbonBar::OfficeStyle);
     //
     setWindowIcon(QIcon(":/icon/icon/SA.svg"));
 }
@@ -129,7 +141,35 @@ void MainWindow::onShowContextCategory(bool on)
 
 void MainWindow::onStyleClicked(int id)
 {
-    ribbonBar()->setRibbonStyle(static_cast< SARibbonBar::RibbonStyle >(id));
+
+    SARibbonBar::RibbonStyle ribbonStyle = static_cast< SARibbonBar::RibbonStyle >(id);
+    ribbonBar()->setRibbonStyle(ribbonStyle);
+    mActionWordWrap->setChecked(SARibbonToolButton::isEnableWordWrap());
+    switch (ribbonStyle) {
+    case SARibbonBar::OfficeStyle:
+        m_edit->append(
+                tr("\nchange ribbon style to office style,The standard office style text display is line wrapped, "
+                   "and you can also control whether it wrap through SARibbonToolButton::setEnableWordWrap"));  // cn:标准的office样式的文字显示是换行的，你也可以通过SARibbonToolButton::setEnableWordWrap来控制它是否换行
+        m_edit->append(tr("ribbonBar()->setRibbonStyle(SARibbonBar::OfficeStyle);"));
+        break;
+    case SARibbonBar::OfficeStyleTwoRow:
+        m_edit->append(tr("\nchange ribbon style to office style 2 row,All text in 2-line mode does not wrap, and you "
+                          "can also control whether it wraps through SARibbonToolButton: setEnableWordWrap"));  // cn:所有2行模式的文字都是不换行的，你也可以通过SARibbonToolButton::setEnableWordWrap来控制它是否换行
+        m_edit->append(tr("ribbonBar()->setRibbonStyle(SARibbonBar::OfficeStyleTwoRow);"));
+        break;
+    case SARibbonBar::WpsLiteStyle:
+        m_edit->append(tr("\nchange ribbon style to wps style,The standard wps style text display is line wrapped, "
+                          "and you can also control whether it wrap through SARibbonToolButton::setEnableWordWrap"));  // cn:标准的wps样式的文字显示是换行的，你也可以通过SARibbonToolButton::setEnableWordWrap来控制它是否换行
+        m_edit->append(tr("ribbonBar()->setRibbonStyle(SARibbonBar::OfficeStyleTwoRow);"));
+        break;
+    case SARibbonBar::WpsLiteStyleTwoRow:
+        m_edit->append(tr("\nchange ribbon style to wps style 2 row,All text in 2-line mode does not wrap, and you "
+                          "can also control whether it wraps through SARibbonToolButton: setEnableWordWrap"));  // cn:所有2行模式的文字都是不换行的，你也可以通过SARibbonToolButton::setEnableWordWrap来控制它是否换行
+        m_edit->append(tr("ribbonBar()->setRibbonStyle(SARibbonBar::OfficeStyleTwoRow);"));
+        break;
+    default:
+        break;
+    }
 }
 
 void MainWindow::onActionCustomizeTriggered(bool b)
@@ -270,14 +310,16 @@ void MainWindow::onActionFontSmallerTriggered()
     qDebug() << "set font:" << f;
 }
 
-void MainWindow::onActionwordWrapIn2rowTriggered(bool b)
+void MainWindow::onActionWordWrapTriggered(bool b)
 {
-    SARibbonToolButton::setLiteStyleEnableWordWrap(b);  //设置是否允许2行模式下文字换行，换行的话图标会较小
-    //换行设定后需要重新计算样式尺寸
-    RibbonSubElementStyleOpt.recalc();
-    //通过setRibbonStyle来让ribbonbar重绘
-    //由于关键尺寸变化了，需要重新布局
-    ribbonBar()->updateRibbonGeometry();
+    ribbonBar()->setEnableWordWrap(b);
+    m_edit->append(tr("By using the SARibbonBar::setEnableWordWrap function, "
+                      "you can set whether text breaks or not.\n"
+                      "By default, the two line mode will not wrap, the three line mode will wrap.\n"
+                      "You can force the two line mode to wrap, or the three line mode to not wrap"));
+    // cn:通过SARibbonBar::setEnableWordWrap函数可以设置文字是否换行。\n
+    // 默认情况下，两行模式都不会换行，三行模式下都会换行。\n
+    // 可以强制设置两行模式也换行，或者三行模式不换行
 }
 
 /**
@@ -295,6 +337,17 @@ void MainWindow::onButtonGroupActionTriggered(QAction* act)
         ribbonBar()->setWindowTitleAligment(al);
         ribbonBar()->repaint();
     }
+}
+
+/**
+ * @brief 颜色按钮点击
+ * @param c
+ * @param on
+ */
+void MainWindow::onColorButtonColorClicked(const QColor& c, bool on)
+{
+    Q_UNUSED(on);
+    m_edit->append(QString("color click %1").arg(c.name()));
 }
 
 void MainWindow::createCategoryMain(SARibbonCategory* page)
@@ -330,10 +383,10 @@ void MainWindow::createCategoryMain(SARibbonCategory* page)
     });
     actShowHideButton->trigger();
 
-    QAction* actwordWrapIn2row = createAction(tr("word wrap in 2row"), ":/icon/icon/wordwrap.svg");
-    actwordWrapIn2row->setCheckable(true);
-    pannelStyle->addSmallAction(actwordWrapIn2row);
-    connect(actwordWrapIn2row, &QAction::triggered, this, &MainWindow::onActionwordWrapIn2rowTriggered);
+    mActionWordWrap = createAction(tr("word wrap"), ":/icon/icon/wordwrap.svg");
+    mActionWordWrap->setCheckable(ribbonBar()->isEnableWordWrap());
+    pannelStyle->addSmallAction(mActionWordWrap);
+    connect(mActionWordWrap, &QAction::triggered, this, &MainWindow::onActionWordWrapTriggered);
 
     QButtonGroup* g = new QButtonGroup(page);
 
@@ -399,10 +452,11 @@ void MainWindow::createCategoryMain(SARibbonCategory* page)
 
     pannelToolButtonStyle->addSeparator();
 
-    act = createAction(tr("Delayed Popup"), ":/icon/icon/folder-cog.svg");
+    act = createAction(tr("Delayed\nPopup"), ":/icon/icon/folder-cog.svg");
     act->setMenu(menu);
     btn = pannelToolButtonStyle->addLargeAction(act);
     btn->setPopupMode(QToolButton::DelayedPopup);
+
     connect(act, &QAction::triggered, this, &MainWindow::onDelayedPopupCheckabletriggered);
 
     act = createAction(tr("Menu Button Popup"), ":/icon/icon/folder-star.svg");
@@ -464,6 +518,22 @@ void MainWindow::createCategoryMain(SARibbonCategory* page)
         }
     });
 
+    act = createAction(tr("Word\nWrap"), ":/icon/icon/setText.svg");
+    pannel2->addLargeAction(act);
+    connect(act, &QAction::triggered, this, [ this ](bool on) {
+        Q_UNUSED(on);
+        this->m_edit->append(tr("Text can be manually wrapped(use \\n), and will appear as 1 line in the case of "
+                                "SARibbonBar::setEnableWordWrap (false)"));  // cn:文本中手动换行
+    });
+
+    act = createAction(tr("Word\nWrap"), ":/icon/icon/setText.svg");
+    act->setMenu(menu);
+    pannel2->addLargeAction(act);
+    connect(act, &QAction::triggered, this, [ this ](bool on) {
+        Q_UNUSED(on);
+        this->m_edit->append(tr("Text can be manually wrapped(use \\n), and will appear as 1 line in the case of "
+                                "SARibbonBar::setEnableWordWrap (false)"));  // cn:文本中手动换行
+    });
     //! 3
     //! pannel 3 start -> widget test
     //!
@@ -722,6 +792,61 @@ void MainWindow::createCategorySize(SARibbonCategory* page)
     connect(actSmallFontSize, &QAction::triggered, this, &MainWindow::onActionFontSmallerTriggered);
 }
 
+void MainWindow::createCategoryColor(SARibbonCategory* page)
+{
+    SARibbonPannel* pannel = page->addPannel(tr("color"));
+
+    auto fpCreateBtn = [ this, pannel ](const QColor& defaultColor = Qt::red) -> SARibbonColorToolButton* {
+        SARibbonColorToolButton* colorButton = new SARibbonColorToolButton(pannel);
+        colorButton->setColor(defaultColor);
+        colorButton->setupStandardColorMenu();
+        this->connect(colorButton, &SARibbonColorToolButton::colorClicked, this, &MainWindow::onColorButtonColorClicked);
+        return colorButton;
+    };
+    // No Icon No text
+    SARibbonColorToolButton* colorButton = fpCreateBtn();
+    colorButton->setObjectName("ColorFillToIcon-NoIconNoText");
+    colorButton->setColorStyle(SARibbonColorToolButton::ColorFillToIcon);
+    pannel->addSmallWidget(colorButton);
+
+    // No Icon have text
+    colorButton = fpCreateBtn(Qt::blue);
+    colorButton->setColorStyle(SARibbonColorToolButton::ColorFillToIcon);
+    colorButton->setObjectName("ColorFillToIcon-NoIconHaveText");
+    colorButton->setText("No Icon have text");
+    pannel->addSmallWidget(colorButton);
+
+    // have Icon No text
+    colorButton = fpCreateBtn(QColor());
+    colorButton->setIcon(QIcon(":/icon/icon/long-text.svg"));
+    pannel->addSmallWidget(colorButton);
+
+    // have Icon have text
+    colorButton = fpCreateBtn(Qt::red);
+    colorButton->setIcon(QIcon(":/icon/icon/long-text.svg"));
+    colorButton->setText("have Icon have text");
+    pannel->addSmallWidget(colorButton);
+
+    colorButton = fpCreateBtn(QColor());
+    colorButton->setButtonType(SARibbonToolButton::LargeButton);
+    colorButton->setObjectName("ColorFillToIcon-LargeColorButton");
+    colorButton->setColorStyle(SARibbonColorToolButton::ColorFillToIcon);
+    colorButton->setText("Large Color Button");
+    pannel->addLargeWidget(colorButton);
+
+    colorButton = fpCreateBtn(QColor());
+    colorButton->setButtonType(SARibbonToolButton::LargeButton);
+    colorButton->setIcon(QIcon(":/icon/icon/long-text.svg"));
+    colorButton->setObjectName("ColorUnderIcon-LargeColorButton");
+    colorButton->setText("Large Color Button");
+    pannel->addLargeWidget(colorButton);
+    //
+    pannel->addSeparator();
+    SAColorPaletteGridWidget* pw = new SAColorPaletteGridWidget(SA::getStandardColorList(), pannel);
+    pw->setFactor({ 75, 120 });
+    pannel->addLargeWidget(pw);
+}
+
 /**
  * @brief 创建上下文标签
  */
@@ -846,6 +971,7 @@ void MainWindow::createContextCategoryPage1(SARibbonCategory* page)
     ctrlContainer1->setContainerWidget(spinbox);
     ctrlContainer1->setText(tr("spinbox:"));
     ctrlContainer1->setEnableShowIcon(false);
+    ctrlContainer1->setMaximumHeight(fontMetrics().lineSpacing() * 1.5);
     pannel4->addMediumWidget(ctrlContainer1);
 
     QLineEdit* linedit                    = new QLineEdit(this);
@@ -853,6 +979,7 @@ void MainWindow::createContextCategoryPage1(SARibbonCategory* page)
     ctrlContainer2->setContainerWidget(linedit);
     ctrlContainer2->setText(tr("linedit:"));
     ctrlContainer2->setEnableShowIcon(false);
+    ctrlContainer2->setMaximumHeight(fontMetrics().lineSpacing() * 1.5);
     pannel4->addMediumWidget(ctrlContainer2);
 }
 
@@ -1017,5 +1144,9 @@ void MainWindow::onInstantPopupCheckabletriggered(bool b)
 
 void MainWindow::onDelayedPopupCheckabletriggered(bool b)
 {
-    m_edit->append(QString("DelayedPopupCheckabletriggered : %1").arg(b));
+    Q_UNUSED(b);
+    m_edit->append(tr("The SARibbonToolButton::setPopupMode(QToolButton::DelayedPopup) method "
+                      "can be used to set the menu pop-up method to delayed pop-up. "
+                      "This also demonstrates manually setting text wrapping"));
+    // cn:使用SARibbonToolButton::setPopupMode(QToolButton::DelayedPopup)方法可以设置菜单弹出方式为延迟弹出，这里也演示了手动设置文本的换行
 }

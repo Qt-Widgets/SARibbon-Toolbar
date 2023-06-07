@@ -8,9 +8,11 @@ SOURCES += \
     $$PWD/SAFramelessHelper.cpp \
     $$PWD/SARibbonActionsManager.cpp \
     $$PWD/SARibbonBar.cpp \
+    $$PWD/SARibbonColorToolButton.cpp \
     $$PWD/SARibbonCustomizeData.cpp \
     $$PWD/SARibbonCustomizeDialog.cpp \
     $$PWD/SARibbonCustomizeWidget.cpp \
+    $$PWD/SARibbonElementFactory.cpp \
     $$PWD/SARibbonMainWindow.cpp \
     $$PWD/SARibbonStyleOption.cpp \
     $$PWD/SAWindowButtonGroup.cpp \
@@ -29,7 +31,6 @@ SOURCES += \
     $$PWD/SARibbonGalleryGroup.cpp \
     $$PWD/SARibbonGalleryItem.cpp \
     $$PWD/SARibbonComboBox.cpp \
-    $$PWD/SARibbonElementCreateDelegate.cpp \
     $$PWD/SARibbonElementManager.cpp \
     $$PWD/SARibbonDrawHelper.cpp \
     $$PWD/SARibbonLineEdit.cpp \
@@ -46,9 +47,11 @@ HEADERS  += \
     $$PWD/SAFramelessHelper.h \
     $$PWD/SARibbonActionsManager.h \
     $$PWD/SARibbonBar.h \
+    $$PWD/SARibbonColorToolButton.h \
     $$PWD/SARibbonCustomizeData.h \
     $$PWD/SARibbonCustomizeDialog.h \
     $$PWD/SARibbonCustomizeWidget.h \
+    $$PWD/SARibbonElementFactory.h \
     $$PWD/SARibbonMainWindow.h \
     $$PWD/SARibbonStyleOption.h \
     $$PWD/SAWindowButtonGroup.h \
@@ -68,7 +71,6 @@ HEADERS  += \
     $$PWD/SARibbonGalleryGroup.h \
     $$PWD/SARibbonGalleryItem.h \
     $$PWD/SARibbonComboBox.h \
-    $$PWD/SARibbonElementCreateDelegate.h \
     $$PWD/SARibbonElementManager.h \
     $$PWD/SARibbonDrawHelper.h \
     $$PWD/SARibbonLineEdit.h \
@@ -83,6 +85,9 @@ HEADERS  += \
 
 RESOURCES += \
     $$PWD/resource.qrc
+
+# 加入SAColorWidgets组件
+include($$PWD/colorWidgets/SAColorWidgets.pri)
 
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
